@@ -18,70 +18,122 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
 
+/**
+ * BrickBreaker Game
+ *
+ * A simple JavaFX-based brick breaker game.
+ * The player controls a paddle to bounce a ball and destroy all bricks.
+ * The game ends when the player clears all bricks (win) or misses the ball (lose).
+ * Hunter Boyd, 03.29.26 - Per 4
+ */
 public class BrickBreaker extends Application {
 
-    // Game configuration
+   /* =========================
+      Game Configuration
+      ========================= */
+
+    // Number of rows and columns of bricks
     int rows = 5;
     int cols = 5;
+
+    // Dimensions of each brick
     int brickWidth = 100;
     int brickHeight = 30;
 
-    // Game state
+   /* =========================
+      Game State Variables
+      ========================= */
+
+    // Current score (number of bricks destroyed)
     int Score = 0;
+
+    // Flags for game outcome
     public boolean lose;
     public boolean win;
 
-    // Ball movement properties
+   /* =========================
+      Ball Physics Properties
+      ========================= */
+
+    // Ball velocity in pixels per second
     Double velocityX = 120.0;
     Double velocityY = 120.0;
-    Double bounceX = -1.0; // Multiplier to reverse X direction
-    Double bounceY = -1.0; // Multiplier to reverse Y direction
 
-    // Player movement speed
+    // Multipliers used to reverse direction upon collision
+    Double bounceX = -1.0;
+    Double bounceY = -1.0;
+
+   /* =========================
+      Player Properties
+      ========================= */
+
+    // Paddle movement speed (pixels per key press)
     Double playerX = 20.0;
 
-    // Game objects
-    Circle circle = new Circle(150, 300, 30); // Ball
-    Rectangle rect = new Rectangle(270, 400, 200, 25); // Paddle
+   /* =========================
+      Game Objects
+      ========================= */
+
+    // Ball (logical representation; rendered via image)
+    Circle circle = new Circle(150, 300, 30);
+
+    // Player paddle
+    Rectangle rect = new Rectangle(270, 400, 200, 25);
+
+    // Ball image
     Image gball = new Image("/golfball.png");
 
-    // Utilities
+   /* =========================
+      Utility Objects
+      ========================= */
+
+    // Random generator for brick colors
     Random rand = new Random();
+
+    // List storing all active bricks
     ArrayList<Rectangle> brickList = new ArrayList<>();
 
-    // Alert dialog for win/lose messages
+    // Alert dialog used for win/lose messages
     Alert lost = new Alert(Alert.AlertType.INFORMATION);
 
     @Override
     public void start(Stage stage) {
 
-        // Create drawing surface
+       /* =========================
+          Scene & Canvas Setup
+          ========================= */
+
+        // Create canvas for rendering graphics
         Canvas canvas = new Canvas(720, 480);
         GraphicsContext gc = canvas.getGraphicsContext2D();
 
-        // Root container and scene setup
+        // Root container and scene
         Group root = new Group(canvas);
         Scene scene = new Scene(root, 720, 480);
 
-        // Configure object appearance
+        // Set visual properties of objects
         circle.setFill(Color.BLUE);
         rect.setFill(Color.BLACK);
 
-        // Stage setup
+        // Configure stage (window)
         stage.setTitle("Brick Breaker");
         stage.setScene(scene);
 
-        // Add game objects to scene
-        // UNUSED - root.getChildren().add(circle);
+        // Add paddle to scene (ball is rendered manually)
         root.getChildren().add(rect);
 
-        // Generate brick grid with alternating row offsets
+       /* =========================
+          Brick Generation
+          ========================= */
+
+        // Create a grid of bricks with alternating row offsets (staggered layout)
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
 
-                // Offset every other row for staggered layout
+                // Offset every other row to create a staggered pattern
                 int offset = (i % 2 != 0) ? 50 : 0;
 
+                // Create brick with calculated position
                 Rectangle brick = new Rectangle(
                         j * brickWidth + offset + 110,
                         i * brickHeight,
@@ -89,58 +141,74 @@ public class BrickBreaker extends Application {
                         brickHeight
                 );
 
-                // Assign random color to each brick
+                // Assign a random color to the brick
                 brick.setFill(Color.rgb(
                         rand.nextInt(256),
                         rand.nextInt(256),
                         rand.nextInt(256)
                 ));
 
+                // Store and display brick
                 brickList.add(brick);
                 root.getChildren().add(brick);
             }
         }
 
+       /* =========================
+          Main Game Loop
+          ========================= */
 
-
-        // Main game loop (runs every frame)
         AnimationTimer timer = new AnimationTimer() {
-            //Create lastTime variable
+
+            // Stores previous frame time for deltaTime calculation
             long lastTime = 0;
+
             @Override
             public void handle(long now) {
 
+                // Initialize lastTime on first frame
                 if (lastTime == 0) {
                     lastTime = now;
                     return;
                 }
 
-                //create deltaTime to keep track of seconds between frames
+                // Calculate elapsed time (seconds) since last frame
                 double deltaTime = (now - lastTime) / 1_000_000_000.0;
                 lastTime = now;
-
 
                 // Clear previous frame
                 gc.clearRect(0, 0, 720, 480);
 
-                // Update ball position
+                /* -------- Ball Movement -------- */
+
+                // Update ball position using velocity and deltaTime
                 circle.setCenterX(circle.getCenterX() + velocityX * deltaTime);
                 circle.setCenterY(circle.getCenterY() + velocityY * deltaTime);
 
-                // Render score & ball
+                // Render score and ball image
                 gc.fillText(String.valueOf(Score), 10, 240);
-                gc.drawImage(gball, circle.getCenterX() - 30, circle.getCenterY() - 30, 90, 90);
+                gc.drawImage(gball,
+                        circle.getCenterX() - 30,
+                        circle.getCenterY() - 30,
+                        90,
+                        90
+                );
 
-                // Paddle collision detection (only when ball moving downward)
+                /* -------- Paddle Collision -------- */
+
+                // Detect collision with paddle (only when ball is moving downward)
                 if (circle.getCenterY() >= rect.getY() - 30 &&
                         circle.getCenterX() >= rect.getX() &&
                         circle.getCenterX() <= rect.getX() + rect.getWidth() &&
                         velocityY > 0) {
 
+                    // Reverse vertical direction
                     velocityY *= bounceY;
                 }
 
-                // Wall collision (left and right)
+                /* -------- Wall Collisions -------- */
+
+                // Left and right wall collision
                 if (circle.getCenterX() <= 30 || circle.getCenterX() >= 690) {
                     velocityX *= bounceX;
                 }
@@ -154,7 +222,9 @@ public class BrickBreaker extends Application {
                     lose = true;
                 }
 
-                // Brick collision detection
+                /* -------- Brick Collision -------- */
+
+                // Iterate through bricks and check for collisions
                 Iterator<Rectangle> it = brickList.iterator();
                 while (it.hasNext()) {
                     Rectangle brick = it.next();
@@ -164,19 +234,21 @@ public class BrickBreaker extends Application {
                             circle.getCenterX() <= brick.getX() + brick.getWidth() &&
                             circle.getCenterY() <= brick.getY() + brick.getHeight() + 30) {
 
-                        // Reverse vertical direction on hit
+                        // Reverse vertical direction on collision
                         velocityY *= bounceY;
 
-                        // Remove brick from scene and list
+                        // Remove brick from game
                         it.remove();
                         root.getChildren().remove(brick);
 
-                        // Increment score
+                        // Increase score
                         Score++;
                     }
                 }
 
-                // Handle loss condition
+                /* -------- Game State Handling -------- */
+
+                // Loss condition
                 if (lose) {
                     Platform.runLater(() -> {
                         this.stop();
@@ -184,12 +256,12 @@ public class BrickBreaker extends Application {
                         lost.showAndWait();
                     });
 
-                    // Check win condition (all bricks destroyed)
+                    // Win condition (all bricks destroyed)
                 } else if (Score >= rows * cols) {
                     win = true;
                 }
 
-                // Handle win condition
+                // Handle win state
                 if (win) {
                     Platform.runLater(() -> {
                         this.stop();
@@ -200,7 +272,11 @@ public class BrickBreaker extends Application {
             }
         };
 
-        // Handle player input for paddle movement
+       /* =========================
+          Input Handling
+          ========================= */
+
+        // Move paddle left/right using arrow keys
         scene.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.LEFT) {
                 rect.setX(rect.getX() - playerX);
@@ -209,10 +285,10 @@ public class BrickBreaker extends Application {
             }
         });
 
-        // Start game loop
+        // Start the animation loop
         timer.start();
 
-        // Display window
+        // Show the window
         stage.show();
     }
 }
