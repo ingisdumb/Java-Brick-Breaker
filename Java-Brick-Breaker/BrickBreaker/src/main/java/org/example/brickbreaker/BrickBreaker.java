@@ -18,7 +18,6 @@ import javafx.scene.image.Image;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
-
 /**
  * BrickBreaker Game
  * A simple JavaFX-based brick breaker game.
