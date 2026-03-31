@@ -3,6 +3,7 @@ package org.example.brickbreaker;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
@@ -20,7 +21,6 @@ import java.util.Random;
 
 /**
  * BrickBreaker Game
- *
  * A simple JavaFX-based brick breaker game.
  * The player controls a paddle to bounce a ball and destroy all bricks.
  * The game ends when the player clears all bricks (win) or misses the ball (lose).
@@ -50,6 +50,7 @@ public class BrickBreaker extends Application {
     // Flags for game outcome
     public boolean lose;
     public boolean win;
+    public boolean offsetNeeded = false;
 
    /* =========================
       Ball Physics Properties
@@ -79,6 +80,9 @@ public class BrickBreaker extends Application {
 
     // Player paddle
     Rectangle rect = new Rectangle(270, 400, 200, 25);
+
+    //Animation timer
+    AnimationTimer timer;
 
     // Ball image
     Image gball = new Image("/golfball.png");
@@ -130,8 +134,13 @@ public class BrickBreaker extends Application {
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
 
+                int offset;
                 // Offset every other row to create a staggered pattern
-                int offset = (i % 2 != 0) ? 50 : 0;
+                if (offsetNeeded) {
+                    offset = (i % 2 != 0) ? 50 : 0;
+                } else {
+                    offset = 0;
+                }
 
                 // Create brick with calculated position
                 Rectangle brick = new Rectangle(
@@ -158,7 +167,9 @@ public class BrickBreaker extends Application {
           Main Game Loop
           ========================= */
 
-        AnimationTimer timer = new AnimationTimer() {
+
+
+        timer = new AnimationTimer() {
 
             // Stores previous frame time for deltaTime calculation
             long lastTime = 0;
@@ -271,6 +282,8 @@ public class BrickBreaker extends Application {
                 }
             }
         };
+
+
 
        /* =========================
           Input Handling
